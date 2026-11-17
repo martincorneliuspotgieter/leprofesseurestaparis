@@ -309,7 +309,10 @@
     <div class="top-bar">
       <span id="level-label">Étape 1 / 8</span>
       <div class="progress-dots" id="progress-dots"></div>
-      <button id="fs-toggle" class="fs-btn">✕ Quitter plein écran</button>
+      <div style="display: flex; gap: 6px;">
+        <button id="audio-btn" class="fs-btn">🔊 Écouter</button>
+        <button id="fs-toggle" class="fs-btn">✕ Quitter plein écran</button>
+      </div>
     </div>
 
     <div class="comic-stage">
@@ -416,6 +419,23 @@
     const levelLabel = document.getElementById("level-label");
     const progressDots = document.getElementById("progress-dots");
     const fsToggleBtn = document.getElementById("fs-toggle");
+    const audioBtn = document.getElementById("audio-btn");
+    const panelAudio = new Audio();
+
+    function playPanelAudio(imageFilename) {
+      if (imageFilename) {
+        // Automatically converts "... - a1a.jpeg" to "... - a1a.mp3"
+        panelAudio.src = imageFilename.replace(/\.[^/.]+$/, ".mp3");
+      }
+      panelAudio.currentTime = 0;
+      panelAudio.play().catch((err) => {
+        console.log("Audio play waiting for interaction:", err);
+      });
+    }
+
+    audioBtn.addEventListener("click", () => {
+      playPanelAudio();
+    });
 
     // Fullscreen Controls
     async function enterFullscreen() {
@@ -496,6 +516,7 @@
 
       renderProgress();
       comicImg.src = data.image;
+      playPanelAudio(data.image);
       overlayLayer.innerHTML = "";
       wordBank.innerHTML = "";
 
@@ -650,6 +671,7 @@
 
         if (solvedCount === totalBlanks) {
           setTimeout(() => {
+            panelAudio.pause();
             currentLevel++;
             if (currentLevel < GAME_DATA.length) {
               loadLevel(currentLevel);
