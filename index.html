@@ -304,7 +304,7 @@
     <div class="top-bar">
       <span id="level-label">Étape 1 / 8</span>
       <div class="progress-dots" id="progress-dots"></div>
-      <button id="fs-toggle" class="fs-btn">⛶ Plein écran</button>
+      <button id="fs-toggle" class="fs-btn">✕ Quitter plein écran</button>
     </div>
 
     <div class="comic-stage">
@@ -391,6 +391,9 @@
     const progressDots = document.getElementById("progress-dots");
 
     // Trigger Fullscreen & Landscape Lock on User Gesture
+    const fsToggleBtn = document.getElementById("fs-toggle");
+
+    // Enter Fullscreen & Landscape Lock on User Gesture
     async function enterFullscreen() {
       const elem = document.documentElement;
       try {
@@ -407,6 +410,38 @@
       }
     }
 
+    // Exit Fullscreen
+    async function exitFullscreen() {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        }
+      } catch (err) {
+        console.log("Exit fullscreen fallback:", err);
+      }
+    }
+
+    // Toggle between Enter and Exit when button is clicked
+    fsToggleBtn.addEventListener("click", () => {
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      if (isFullscreen) {
+        exitFullscreen();
+      } else {
+        enterFullscreen();
+      }
+    });
+
+    // Automatically update button text if user exits via phone swipe/ESC key
+    function updateFsButtonLabel() {
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      fsToggleBtn.textContent = isFullscreen ? "✕ Quitter plein écran" : "⛶ Plein écran";
+    }
+
+    document.addEventListener("fullscreenchange", updateFsButtonLabel);
+    document.addEventListener("webkitfullscreenchange", updateFsButtonLabel);
+
     document.getElementById("play-btn").addEventListener("click", () => {
       enterFullscreen();
       startScreen.classList.add("hidden");
@@ -414,8 +449,6 @@
       currentLevel = 0;
       loadLevel(currentLevel);
     });
-
-    document.getElementById("fs-toggle").addEventListener("click", enterFullscreen);
 
     document.getElementById("restart-btn").addEventListener("click", () => {
       endScreen.classList.add("hidden");
