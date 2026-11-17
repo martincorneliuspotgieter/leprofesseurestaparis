@@ -31,7 +31,7 @@
       color: var(--text-light);
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
-      touch-action: none; /* Prevents mobile pull-to-refresh and scrolling */
+      touch-action: none;
     }
 
     /* Screens */
@@ -104,9 +104,10 @@
       align-items: center;
       font-size: 0.95rem;
       font-weight: 700;
-      padding: 4px 8px;
+      padding: 4px 10px;
       background: var(--panel-bg);
       border-radius: 10px;
+      flex-shrink: 0;
     }
 
     .progress-dots {
@@ -140,7 +141,7 @@
       cursor: pointer;
     }
 
-    /* Comic Image Container */
+    /* Comic Stage & Exact-Fit Wrapper */
     .comic-stage {
       flex: 1;
       width: 100%;
@@ -148,81 +149,86 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
+      overflow: hidden;
     }
 
-    .comic-stage img {
+    /* This wrapper hugs the exact dimensions of the rendered image */
+    .comic-wrapper {
+      position: relative;
+      display: inline-flex;
       max-width: 100%;
       max-height: 100%;
-      object-fit: contain;
       border-radius: 10px;
+      overflow: hidden;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
       background: #fff;
     }
 
-    /* Interactive Sentence & Drop Zones */
-    .sentence-bar {
-      width: 100%;
-      background: #fdf6d8;
-      color: #1a1a1a;
-      border: 3px solid #222;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: clamp(1rem, 2.8vw, 1.35rem);
-      font-weight: 700;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    .comic-wrapper img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 115px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Overlay Drop Zones positioned directly over the comic lines */
+    .overlay-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
     .drop-zone {
-      display: inline-flex;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 110px;
-      height: 36px;
-      padding: 0 12px;
-      border-bottom: 3px dashed #333;
-      background: rgba(0, 0, 0, 0.08);
+      background: rgba(245, 176, 65, 0.28);
+      border: 2px dashed rgba(211, 84, 0, 0.85);
       border-radius: 6px;
       color: #141824;
       font-weight: 800;
-      transition: all 0.15s ease;
+      font-size: clamp(0.65rem, 1.9vw, 1.05rem);
+      white-space: nowrap;
+      padding: 0 4px;
+      transition: background 0.15s ease, transform 0.15s ease;
     }
 
     .drop-zone.highlight {
-      background: rgba(245, 176, 65, 0.45);
-      border-color: var(--accent-hover);
-      transform: scale(1.05);
+      background: rgba(245, 176, 65, 0.72);
+      border: 2px solid #d35400;
+      transform: translate(-50%, -50%) scale(1.08);
+      z-index: 5;
     }
 
     .drop-zone.filled {
-      background: var(--success);
-      color: #fff;
-      border-bottom: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      background: #fdf6d8;
+      border: 2px solid var(--success);
+      color: #0e6632;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
 
     .drop-zone.shake {
       animation: shake 0.35s ease;
-      background: var(--error);
+      background: rgba(231, 76, 60, 0.85);
       color: #fff;
     }
 
-    /* Word Bank */
+    /* Word Bank at Bottom */
     .word-bank {
       width: 100%;
-      min-height: 54px;
+      min-height: 50px;
+      flex-shrink: 0;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 6px;
+      padding: 6px 10px;
       background: var(--panel-bg);
       border-radius: 12px;
     }
@@ -230,12 +236,12 @@
     .word-tile {
       background: var(--accent);
       color: #141824;
-      padding: 10px 18px;
+      padding: 8px 16px;
       border-radius: 8px;
-      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+      font-size: clamp(0.9rem, 2.3vw, 1.1rem);
       font-weight: 800;
       cursor: grab;
-      box-shadow: 0 4px 0 #b9770e;
+      box-shadow: 0 3px 0 #b9770e;
       touch-action: none;
       transition: transform 0.1s ease, opacity 0.2s ease;
     }
@@ -251,7 +257,6 @@
       box-shadow: none;
     }
 
-    /* Floating clone while dragging */
     .drag-clone {
       position: fixed;
       pointer-events: none;
@@ -277,9 +282,9 @@
     }
 
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-6px); }
-      75% { transform: translateX(6px); }
+      0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+      25% { transform: translate(-50%, -50%) translateX(-6px); }
+      75% { transform: translate(-50%, -50%) translateX(6px); }
     }
   </style>
 </head>
@@ -292,10 +297,10 @@
     <p>Ce jeu fonctionne mieux en mode paysage (horizontal).</p>
   </div>
 
-  <!-- Start Screen (Triggers Fullscreen on Tap) -->
+  <!-- Start Screen -->
   <div id="start-screen" class="screen">
     <h1>Le professeur est à Paris</h1>
-    <p>Glisse les bons mots dans les cases vides pour compléter l'histoire !</p>
+    <p>Glisse les bons mots directement sur les lignes vides de la bande dessinée !</p>
     <button id="play-btn" class="btn-primary">JOUER ▶</button>
   </div>
 
@@ -308,11 +313,11 @@
     </div>
 
     <div class="comic-stage">
-      <img id="comic-img" src="" alt="Bande dessinée" />
+      <div class="comic-wrapper" id="comic-wrapper">
+        <img id="comic-img" src="" alt="Bande dessinée" />
+        <div class="overlay-layer" id="overlay-layer"></div>
+      </div>
     </div>
-
-    <!-- Sentence with interactive drop zones matching the right panel -->
-    <div class="sentence-bar" id="sentence-bar"></div>
 
     <!-- Draggable / Tappable Word Bank -->
     <div class="word-bank" id="word-bank"></div>
@@ -328,50 +333,71 @@
   <script>
     /**
      * =====================================================================
-     * CONFIGURATION FOR EPISODE 1
-     * To make Episodes 2-6, simply replace the image filenames and sentences!
-     * Wrap target blank words in brackets: [word]
+     * EPISODE 1 DATA WITH EXACT ON-IMAGE COORDINATES (% of image width/height)
+     * x = center X (%), y = center Y (%), w = width (%), h = height (%)
      * =====================================================================
      */
     const GAME_DATA = [
       {
         image: "Le professeur est à Paris 1 (2) (1) - a1a.jpeg",
-        sentence: "Le [professeur] est à [Paris].",
+        blanks: [
+          { word: "professeur", x: 69.5, y: 11.2, w: 14.5, h: 6.2 },
+          { word: "Paris",      x: 72.5, y: 18.0, w: 8.5,  h: 6.2 }
+        ],
         distractors: ["bus", "taxi"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - a2a.jpeg",
-        sentence: "Il a pris un [bus] ...",
+        blanks: [
+          { word: "bus", x: 77.5, y: 11.2, w: 6.8, h: 6.5 }
+        ],
         distractors: ["croissant", "parc"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - b1a.jpeg",
-        sentence: "... et un [taxi] ...",
+        blanks: [
+          { word: "taxi", x: 71.8, y: 11.2, w: 7.2, h: 6.5 }
+        ],
         distractors: ["bus", "fromage"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - b2a.jpeg",
-        sentence: "... pour visiter [la tour Eiffel].",
+        blanks: [
+          { word: "la tour Eiffel", x: 82.5, y: 10.6, w: 16.5, h: 6.5 }
+        ],
         distractors: ["la radio", "le parc"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - c1a.jpeg",
-        sentence: "Il lit [Astérix et Obélix] dans le parc.",
+        blanks: [
+          { word: "Astérix et Obélix", x: 74.8, y: 10.6, w: 19.5, h: 6.2 }
+        ],
         distractors: ["la mode", "un croissant"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - c2a.jpeg",
-        sentence: "Il mange du [fromage], un [croissant] et un peu de [chocolat].",
+        blanks: [
+          { word: "fromage",   x: 75.5, y: 10.6, w: 11.5, h: 6.0 },
+          { word: "croissant", x: 59.5, y: 17.6, w: 12.5, h: 6.0 },
+          { word: "chocolat",  x: 84.5, y: 17.6, w: 11.5, h: 6.0 }
+        ],
         distractors: ["taxi"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - d1a.jpeg",
-        sentence: "À la [télévision] et à la [radio], on parle de la [mode].",
+        blanks: [
+          { word: "télévision", x: 67.5, y: 10.6, w: 13.5, h: 6.0 },
+          { word: "radio",      x: 87.2, y: 10.6, w: 7.8,  h: 6.0 },
+          { word: "mode",       x: 76.2, y: 17.6, w: 8.2,  h: 6.0 }
+        ],
         distractors: ["France"]
       },
       {
         image: "Le professeur est à Paris 1 (2) (1) - d2a.jpeg",
-        sentence: "[Téléphone] pour vous, monsieur le [professeur] !",
+        blanks: [
+          { word: "Téléphone",  x: 61.5, y: 11.5, w: 13.5, h: 6.2 },
+          { word: "professeur", x: 66.5, y: 26.8, w: 14.5, h: 6.2 }
+        ],
         distractors: ["Chocolat", "bus"]
       }
     ];
@@ -385,15 +411,13 @@
     const gameScreen = document.getElementById("game-screen");
     const endScreen = document.getElementById("end-screen");
     const comicImg = document.getElementById("comic-img");
-    const sentenceBar = document.getElementById("sentence-bar");
+    const overlayLayer = document.getElementById("overlay-layer");
     const wordBank = document.getElementById("word-bank");
     const levelLabel = document.getElementById("level-label");
     const progressDots = document.getElementById("progress-dots");
-
-    // Trigger Fullscreen & Landscape Lock on User Gesture
     const fsToggleBtn = document.getElementById("fs-toggle");
 
-    // Enter Fullscreen & Landscape Lock on User Gesture
+    // Fullscreen Controls
     async function enterFullscreen() {
       const elem = document.documentElement;
       try {
@@ -410,7 +434,6 @@
       }
     }
 
-    // Exit Fullscreen
     async function exitFullscreen() {
       try {
         if (document.exitFullscreen) {
@@ -423,7 +446,6 @@
       }
     }
 
-    // Toggle between Enter and Exit when button is clicked
     fsToggleBtn.addEventListener("click", () => {
       const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
       if (isFullscreen) {
@@ -433,7 +455,6 @@
       }
     });
 
-    // Automatically update button text if user exits via phone swipe/ESC key
     function updateFsButtonLabel() {
       const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
       fsToggleBtn.textContent = isFullscreen ? "✕ Quitter plein écran" : "⛶ Plein écran";
@@ -470,49 +491,41 @@
     function loadLevel(index) {
       const data = GAME_DATA[index];
       solvedCount = 0;
-      totalBlanks = 0;
+      totalBlanks = data.blanks.length;
       selectedTile = null;
 
       renderProgress();
       comicImg.src = data.image;
-      sentenceBar.innerHTML = "";
+      overlayLayer.innerHTML = "";
       wordBank.innerHTML = "";
 
       const answers = [];
-      // Parse sentence parts: text vs [blank]
-      const parts = data.sentence.split(/(\[.*?\])/g);
 
-      parts.forEach(part => {
-        if (!part) return;
-        if (part.startsWith("[") && part.endsWith("]")) {
-          const answerWord = part.slice(1, -1);
-          answers.push(answerWord);
-          totalBlanks++;
+      // Create positioned drop zones directly on top of the speech/caption lines
+      data.blanks.forEach((blank) => {
+        answers.push(blank.word);
 
-          const zone = document.createElement("span");
-          zone.className = "drop-zone";
-          zone.dataset.answer = answerWord;
-          zone.textContent = "______";
+        const zone = document.createElement("div");
+        zone.className = "drop-zone";
+        zone.dataset.answer = blank.word;
+        zone.style.left = blank.x + "%";
+        zone.style.top = blank.y + "%";
+        zone.style.width = blank.w + "%";
+        zone.style.height = blank.h + "%";
 
-          // Allow tap-to-place if user tapped a word first
-          zone.addEventListener("click", () => {
-            if (selectedTile && !zone.classList.contains("filled")) {
-              checkMatch(selectedTile, zone);
-            }
-          });
+        zone.addEventListener("click", () => {
+          if (selectedTile && !zone.classList.contains("filled")) {
+            checkMatch(selectedTile, zone);
+          }
+        });
 
-          sentenceBar.appendChild(zone);
-        } else {
-          const span = document.createElement("span");
-          span.textContent = part;
-          sentenceBar.appendChild(span);
-        }
+        overlayLayer.appendChild(zone);
       });
 
       // Combine answers + distractors and shuffle
       const allWords = [...answers, ...(data.distractors || [])].sort(() => Math.random() - 0.5);
 
-      allWords.forEach(word => {
+      allWords.forEach((word) => {
         const tile = document.createElement("div");
         tile.className = "word-tile";
         tile.textContent = word;
@@ -570,7 +583,6 @@
               checkMatch(tile, targetZone);
             }
           } else {
-            // Treat as a clean tap selection
             toggleSelectTile(tile);
           }
         };
@@ -601,12 +613,12 @@
       const zones = document.querySelectorAll(".drop-zone:not(.filled)");
       for (const zone of zones) {
         const rect = zone.getBoundingClientRect();
-        // Generous 15px hit padding for thumbs
+        // 18px generous thumb hit radius around the blank line
         if (
-          x >= rect.left - 15 &&
-          x <= rect.right + 15 &&
-          y >= rect.top - 15 &&
-          y <= rect.bottom + 15
+          x >= rect.left - 18 &&
+          x <= rect.right + 18 &&
+          y >= rect.top - 18 &&
+          y <= rect.bottom + 18
         ) {
           return zone;
         }
@@ -621,7 +633,7 @@
     }
 
     function clearHighlights() {
-      document.querySelectorAll(".drop-zone").forEach(z => z.classList.remove("highlight"));
+      document.querySelectorAll(".drop-zone").forEach((z) => z.classList.remove("highlight"));
     }
 
     function checkMatch(tile, zone) {
@@ -645,7 +657,7 @@
               gameScreen.classList.add("hidden");
               endScreen.classList.remove("hidden");
             }
-          }, 850);
+          }, 900);
         }
       } else {
         zone.classList.add("shake");
