@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Le professeur est à Paris - Épisode 3</title>
+  <style>
+    :root {
+      --bg-dark: #141824;
+      --panel-bg: #1f2638;
+      --accent: #f5b041;
+      --accent-hover: #f39c12;
+      --success: #2ecc71;
+      --error: #e74c3c;
+      --text-light: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      transition: opacity 0.25s ease;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Title / Start Screen */
+    #start-screen {
+      background: radial-gradient(circle at center, #28324b 0%, #141824 100%);
+      text-align: center;
+      z-index: 20;
+    }
+
+    #start-screen h1 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      margin-bottom: 8px;
+      color: var(--accent);
+      text-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    }
+
+    #start-screen p {
+      font-size: 1rem;
+      opacity: 0.85;
+      margin-bottom: 28px;
+      max-width: 440px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #141824;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 44px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(245, 176, 65, 0.4);
+      transition: transform 0.1s ease;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.95);
+    }
+
+    /* Main Game Layout */
+    #game-screen {
+      justify-content: space-between;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      background: var(--panel-bg);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .dot.active {
+      background: var(--accent);
+      transform: scale(1.2);
+    }
+
+    .dot.done {
+      background: var(--success);
+    }
+
+    .fs-btn {
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: white;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Comic Stage & Exact-Fit Wrapper */
+    .comic-stage {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .comic-wrapper {
+      position: relative;
+      display: inline-flex;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      background: #fff;
+    }
+
+    .comic-wrapper img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 115px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Overlay Drop Zones positioned directly over speech-bubble & caption lines */
+    .overlay-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .drop-zone {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(245, 176, 65, 0.28);
+      border: 2px dashed rgba(211, 84, 0, 0.85);
+      border-radius: 6px;
+      color: #141824;
+      font-weight: 800;
+      font-size: clamp(0.62rem, 1.8vw, 1.0rem);
+      white-space: nowrap;
+      padding: 0 4px;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .drop-zone.highlight {
+      background: rgba(245, 176, 65, 0.72);
+      border: 2px solid #d35400;
+      transform: translate(-50%, -50%) scale(1.08);
+      z-index: 5;
+    }
+
+    .drop-zone.filled {
+      background: #ffffff;
+      border: 2px solid var(--success);
+      color: #0e6632;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    .drop-zone.shake {
+      animation: shake 0.35s ease;
+      background: rgba(231, 76, 60, 0.85);
+      color: #fff;
+    }
+
+    /* Word Bank at Bottom */
+    .word-bank {
+      width: 100%;
+      min-height: 50px;
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 6px 10px;
+      background: var(--panel-bg);
+      border-radius: 12px;
+    }
+
+    .word-tile {
+      background: var(--accent);
+      color: #141824;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: clamp(0.9rem, 2.3vw, 1.1rem);
+      font-weight: 800;
+      cursor: grab;
+      box-shadow: 0 3px 0 #b9770e;
+      touch-action: none;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+
+    .word-tile.selected {
+      outline: 3px solid #ffffff;
+      transform: scale(1.08);
+    }
+
+    .word-tile.used {
+      opacity: 0.25;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    .drag-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 999;
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      opacity: 0.95;
+    }
+
+    /* Portrait Orientation Warning for Phones */
+    #rotate-notice {
+      display: none;
+      background: rgba(20, 24, 36, 0.96);
+      z-index: 50;
+      text-align: center;
+      padding: 24px;
+    }
+
+    @media screen and (max-width: 600px) and (orientation: portrait) {
+      #rotate-notice {
+        display: flex;
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+      25% { transform: translate(-50%, -50%) translateX(-6px); }
+      75% { transform: translate(-50%, -50%) translateX(6px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Rotate Device Prompt (Mobile Portrait) -->
+  <div id="rotate-notice" class="screen">
+    <div style="font-size: 3rem; margin-bottom: 12px;">📱🔄</div>
+    <h2>Tournez votre téléphone</h2>
+    <p>Ce jeu fonctionne mieux en mode paysage (horizontal).</p>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="start-screen" class="screen">
+    <h1>Le professeur est à Paris — Épisode 3</h1>
+    <p>Écoute et glisse les bons mots dans les bulles de la bande dessinée !</p>
+    <button id="play-btn" class="btn-primary">JOUER ▶</button>
+  </div>
+
+  <!-- Main Gameplay Screen -->
+  <div id="game-screen" class="screen hidden">
+    <div class="top-bar">
+      <span id="level-label">Étape 1 / 5</span>
+      <div class="progress-dots" id="progress-dots"></div>
+      <div style="display: flex; gap: 6px;">
+        <button id="audio-btn" class="fs-btn">🔊 Écouter</button>
+        <button id="fs-toggle" class="fs-btn">✕ Quitter plein écran</button>
+      </div>
+    </div>
+
+    <div class="comic-stage">
+      <div class="comic-wrapper" id="comic-wrapper">
+        <img id="comic-img" src="" alt="Bande dessinée" />
+        <div class="overlay-layer" id="overlay-layer"></div>
+      </div>
+    </div>
+
+    <!-- Draggable / Tappable Word Bank -->
+    <div class="word-bank" id="word-bank"></div>
+  </div>
+
+  <!-- Victory Screen -->
+  <div id="end-screen" class="screen hidden">
+    <h1 style="color: var(--success);">Bravo ! 🎉</h1>
+    <p>Tu as complété l'épisode 3 du professeur à Paris !</p>
+    <button id="restart-btn" class="btn-primary">REJOUER ↺</button>
+  </div>
+
+  <script>
+    /**
+     * =====================================================================
+     * EPISODE 3 DATA (a2 -> e2) WITH SPEECH-BUBBLE DROP-ZONE COORDINATES
+     * Matching MP3 audio files are loaded automatically (.jpeg -> .mp3)
+     * =====================================================================
+     */
+    const GAME_DATA = [
+      {
+        image: "Le professeur est à Paris 3 (3) a2.jpeg",
+        blanks: [
+          { word: "le professeur",  x: 29.5, y: 11.2, w: 17.5, h: 6.0 },
+          { word: "France",         x: 24.5, y: 18.5, w: 9.5,  h: 6.0 },
+          { word: "Paris",          x: 37.8, y: 18.5, w: 7.5,  h: 6.0 },
+          { word: "la tour Eiffel", x: 75.5, y: 16.5, w: 17.5, h: 6.2 }
+        ],
+        distractors: []
+      },
+      {
+        image: "Le professeur est à Paris 3 (3) b2.jpeg",
+        blanks: [
+          { word: "au magasin",   x: 22.8, y: 10.2, w: 14.5, h: 6.0 },
+          { word: "fromage",      x: 17.2, y: 17.5, w: 11.5, h: 6.0 },
+          { word: "un croissant", x: 34.5, y: 17.5, w: 16.0, h: 6.0 },
+          { word: "chocolat",     x: 34.8, y: 24.8, w: 11.8, h: 6.0 }
+        ],
+        distractors: []
+      },
+      {
+        image: "Le professeur est à Paris 3 (3) c2.jpeg",
+        blanks: [
+          { word: "la tour Eiffel", x: 19.2, y: 9.8, w: 18.0, h: 6.2 }
+        ],
+        distractors: ["la mode", "la radio"]
+      },
+      {
+        image: "Le professeur est à Paris 3 (3) d2.jpeg",
+        blanks: [
+          { word: "la mode",    x: 17.8, y: 11.2, w: 10.8, h: 6.0 },
+          { word: "télévision", x: 65.5, y: 17.8, w: 13.5, h: 6.0 },
+          { word: "la radio",   x: 84.5, y: 17.8, w: 10.8, h: 6.0 }
+        ],
+        distractors: ["téléphone"]
+      },
+      {
+        image: "Le professeur est à Paris 2 (3) e2.jpeg",
+        blanks: [
+          { word: "téléphone",  x: 44.2, y: 10.5, w: 12.8, h: 6.0 },
+          { word: "professeur", x: 39.8, y: 24.8, w: 14.5, h: 6.0 }
+        ],
+        distractors: ["Paris", "chocolat"]
+      }
+    ];
+
+    let currentLevel = 0;
+    let solvedCount = 0;
+    let totalBlanks = 0;
+    let selectedTile = null;
+
+    const startScreen = document.getElementById("start-screen");
+    const gameScreen = document.getElementById("game-screen");
+    const endScreen = document.getElementById("end-screen");
+    const comicImg = document.getElementById("comic-img");
+    const overlayLayer = document.getElementById("overlay-layer");
+    const wordBank = document.getElementById("word-bank");
+    const levelLabel = document.getElementById("level-label");
+    const progressDots = document.getElementById("progress-dots");
+    const fsToggleBtn = document.getElementById("fs-toggle");
+    const audioBtn = document.getElementById("audio-btn");
+    const panelAudio = new Audio();
+
+    // Audio Controller
+    function playPanelAudio(imageFilename) {
+      if (imageFilename) {
+        panelAudio.src = imageFilename.replace(/\.[^/.]+$/, ".mp3");
+      }
+      panelAudio.currentTime = 0;
+      panelAudio.play().catch((err) => {
+        console.log("Audio play waiting for interaction:", err);
+      });
+    }
+
+    audioBtn.addEventListener("click", () => {
+      playPanelAudio();
+    });
+
+    // Fullscreen Controls
+    async function enterFullscreen() {
+      const elem = document.documentElement;
+      try {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape").catch(() => {});
+        }
+      } catch (err) {
+        console.log("Fullscreen optional fallback:", err);
+      }
+    }
+
+    async function exitFullscreen() {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        }
+      } catch (err) {
+        console.log("Exit fullscreen fallback:", err);
+      }
+    }
+
+    fsToggleBtn.addEventListener("click", () => {
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      if (isFullscreen) {
+        exitFullscreen();
+      } else {
+        enterFullscreen();
+      }
+    });
+
+    function updateFsButtonLabel() {
+      const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      fsToggleBtn.textContent = isFullscreen ? "✕ Quitter plein écran" : "⛶ Plein écran";
+    }
+
+    document.addEventListener("fullscreenchange", updateFsButtonLabel);
+    document.addEventListener("webkitfullscreenchange", updateFsButtonLabel);
+
+    document.getElementById("play-btn").addEventListener("click", () => {
+      enterFullscreen();
+      startScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+      currentLevel = 0;
+      loadLevel(currentLevel);
+    });
+
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      endScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+      currentLevel = 0;
+      loadLevel(currentLevel);
+    });
+
+    function renderProgress() {
+      levelLabel.textContent = `Étape ${currentLevel + 1} / ${GAME_DATA.length}`;
+      progressDots.innerHTML = "";
+      GAME_DATA.forEach((_, idx) => {
+        const dot = document.createElement("div");
+        dot.className = "dot" + (idx < currentLevel ? " done" : idx === currentLevel ? " active" : "");
+        progressDots.appendChild(dot);
+      });
+    }
+
+    function loadLevel(index) {
+      const data = GAME_DATA[index];
+      solvedCount = 0;
+      totalBlanks = data.blanks.length;
+      selectedTile = null;
+
+      renderProgress();
+      comicImg.src = data.image;
+      playPanelAudio(data.image);
+      overlayLayer.innerHTML = "";
+      wordBank.innerHTML = "";
+
+      const answers = [];
+
+      data.blanks.forEach((blank) => {
+        answers.push(blank.word);
+
+        const zone = document.createElement("div");
+        zone.className = "drop-zone";
+        zone.dataset.answer = blank.word;
+        zone.style.left = blank.x + "%";
+        zone.style.top = blank.y + "%";
+        zone.style.width = blank.w + "%";
+        zone.style.height = blank.h + "%";
+
+        zone.addEventListener("click", () => {
+          if (selectedTile && !zone.classList.contains("filled")) {
+            checkMatch(selectedTile, zone);
+          }
+        });
+
+        overlayLayer.appendChild(zone);
+      });
+
+      const allWords = [...answers, ...(data.distractors || [])].sort(() => Math.random() - 0.5);
+
+      allWords.forEach((word) => {
+        const tile = document.createElement("div");
+        tile.className = "word-tile";
+        tile.textContent = word;
+        tile.dataset.word = word;
+        setupDragAndTap(tile);
+        wordBank.appendChild(tile);
+      });
+    }
+
+    function setupDragAndTap(tile) {
+      let clone = null;
+      let startX = 0, startY = 0;
+      let isDragging = false;
+
+      tile.addEventListener("pointerdown", (e) => {
+        if (tile.classList.contains("used")) return;
+        e.preventDefault();
+        startX = e.clientX;
+        startY = e.clientY;
+        isDragging = false;
+
+        tile.setPointerCapture(e.pointerId);
+
+        const onPointerMove = (moveEvent) => {
+          const dx = Math.abs(moveEvent.clientX - startX);
+          const dy = Math.abs(moveEvent.clientY - startY);
+
+          if (!isDragging && (dx > 6 || dy > 6)) {
+            isDragging = true;
+            clearSelection();
+            clone = tile.cloneNode(true);
+            clone.classList.add("drag-clone");
+            document.body.appendChild(clone);
+          }
+
+          if (isDragging && clone) {
+            clone.style.left = moveEvent.clientX + "px";
+            clone.style.top = moveEvent.clientY + "px";
+            highlightZoneUnder(moveEvent.clientX, moveEvent.clientY);
+          }
+        };
+
+        const onPointerUp = (upEvent) => {
+          tile.removeEventListener("pointermove", onPointerMove);
+          tile.removeEventListener("pointerup", onPointerUp);
+
+          if (isDragging) {
+            if (clone) {
+              clone.remove();
+              clone = null;
+            }
+            const targetZone = getZoneUnder(upEvent.clientX, upEvent.clientY);
+            clearHighlights();
+            if (targetZone && !targetZone.classList.contains("filled")) {
+              checkMatch(tile, targetZone);
+            }
+          } else {
+            toggleSelectTile(tile);
+          }
+        };
+
+        tile.addEventListener("pointermove", onPointerMove);
+        tile.addEventListener("pointerup", onPointerUp);
+      });
+    }
+
+    function toggleSelectTile(tile) {
+      if (selectedTile === tile) {
+        clearSelection();
+      } else {
+        clearSelection();
+        selectedTile = tile;
+        tile.classList.add("selected");
+      }
+    }
+
+    function clearSelection() {
+      if (selectedTile) {
+        selectedTile.classList.remove("selected");
+        selectedTile = null;
+      }
+    }
+
+    function getZoneUnder(x, y) {
+      const zones = document.querySelectorAll(".drop-zone:not(.filled)");
+      for (const zone of zones) {
+        const rect = zone.getBoundingClientRect();
+        if (
+          x >= rect.left - 18 &&
+          x <= rect.right + 18 &&
+          y >= rect.top - 18 &&
+          y <= rect.bottom + 18
+        ) {
+          return zone;
+        }
+      }
+      return null;
+    }
+
+    function highlightZoneUnder(x, y) {
+      clearHighlights();
+      const zone = getZoneUnder(x, y);
+      if (zone) zone.classList.add("highlight");
+    }
+
+    function clearHighlights() {
+      document.querySelectorAll(".drop-zone").forEach((z) => z.classList.remove("highlight"));
+    }
+
+    function checkMatch(tile, zone) {
+      const draggedWord = tile.dataset.word;
+      const expectedWord = zone.dataset.answer;
+
+      clearSelection();
+
+      if (draggedWord === expectedWord) {
+        zone.textContent = expectedWord;
+        zone.classList.add("filled");
+        tile.classList.add("used");
+        solvedCount++;
+
+        if (solvedCount === totalBlanks) {
+          setTimeout(() => {
+            panelAudio.pause();
+            currentLevel++;
+            if (currentLevel < GAME_DATA.length) {
+              loadLevel(currentLevel);
+            } else {
+              gameScreen.classList.add("hidden");
+              endScreen.classList.remove("hidden");
+            }
+          }, 900);
+        }
+      } else {
+        zone.classList.add("shake");
+        setTimeout(() => zone.classList.remove("shake"), 400);
+      }
+    }
+  </script>
+</body>
+</html>
